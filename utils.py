@@ -2,6 +2,7 @@
 import pandas as pd
 import json
 import nltk
+from gensim.models import Word2Vec
 
 
 # load data frame
@@ -29,4 +30,8 @@ def get_word_frequency(preprocessed_dataset: list, word: str=""):
 def unzip(zipped: list) -> list:
     list1, list2 = [list(s) for s in zip(*zipped)]
     return list1, list2
+
+# load Word2Vec model
+def load_gensim_model(file: str=""):
+    return Word2Vec.load(file)
 

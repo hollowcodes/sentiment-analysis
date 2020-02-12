@@ -1,12 +1,14 @@
 
-from utils import load_dataframe, write_json, unzip, get_word_frequency, write_json
+from utils import load_dataframe, write_json, unzip, get_word_frequency, load_json, load_gensim_model
 import nltk
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
 from tqdm import tqdm
-
+from gensim.models import Word2Vec, KeyedVectors
+import numpy as np
+import os
 
 
 class Preprocess:
@@ -62,7 +64,6 @@ class Preprocess:
         else:
             return self.tweets
 
-    
 
 """ load, preprocess and save train-/test-/val-set """
 def create_preprocessed_dataset(train_set_path: str="", test_set_path: str="", save_to_folder: str="", validation_percantage: float=0.0):
@@ -83,14 +84,38 @@ def create_preprocessed_dataset(train_set_path: str="", test_set_path: str="", s
     val_set = Preprocess(validation_dataframe, batch_name="val-set").preprocess_dataset()
 
     # save datasets
-    write_json(train_set, file=(save_to_folder + "/train_set"))
+    write_json(train_set, file=(save_to_folder + "/train_set_tweets.json"))
     print("Saved train set.")
-    write_json(test_set, file=(save_to_folder + "/test_set"))
+    write_json(test_set, file=(save_to_folder + "/test_set_tweets.json"))
     print("Saved test set.")
-    write_json(val_set, file=(save_to_folder + "/val_set"))
+    write_json(val_set, file=(save_to_folder + "/val_set_tweets.json"))
     print("Saved validation set.")
 
 
+""" remove labels from train- and validation-dataset """
+def remove_labels(dataset: list) -> list:
+    for i in range(len(dataset)):
+        dataset[i] = dataset[i][0]
+
+    return dataset
+
+
+""" create vector embeddings for all words """
+def word2vec(dataset_folder: str="", save_model_file: str="",):
+    train_set = remove_labels(load_json(file=(dataset_folder + "/train_set_tweets.json")))
+    test_set = load_json(file=(dataset_folder + "/test_set_tweets.json"))
+    val_set = remove_labels(load_json(file=(dataset_folder + "/val_set_tweets.json")))
+    full_data = np.concatenate((train_set, test_set, val_set))
+
+    # create and save Word2Vec model
+    model = Word2Vec(full_data, min_count=1, size=32)
+    model.save(save_model_file)
+    print("Saved word2vec model.")
+
+    
+
 if __name__ == "__main__":
-    train_set_path, test_set_path = "dataset/train.csv", "dataset/test.csv"
+    train_set_path, test_set_path, word2vec_model = "dataset/train.csv", "dataset/test.csv", "dataset/data/word_embeddings.model"
+
     create_preprocessed_dataset(train_set_path=train_set_path, test_set_path=test_set_path, save_to_folder="dataset/data", validation_percantage=0.1)
+    word2vec(dataset_folder="dataset/data", save_model_file=word2vec_model)
