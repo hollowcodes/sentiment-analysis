@@ -55,8 +55,13 @@ class Preprocess:
 
     # preprocess all tweets
     def preprocess_dataset(self):
-        for idx in tqdm(range(len(self.tweets)), ncols=100, desc=("preprocessing " + self.batch_name)):
-            self.tweets[idx] = self._apply(self.tweets[idx])
+        for idx in tqdm(range(len(self.tweets)), ncols=150, desc=("preprocessing " + self.batch_name)):
+            preprocessed_tweet = self._apply(self.tweets[idx])
+            if len(preprocessed_tweet) > 1:
+                self.tweets[idx] = preprocessed_tweet
+            else:
+                if self.batch_name != "test-set":
+                    self.labels.pop(idx)
 
         # no labels when preprocessing test-set
         if self.batch_name != "test-set":
@@ -78,10 +83,16 @@ def create_preprocessed_dataset(train_set_path: str="", test_set_path: str="", s
     # load test dataframe
     test_dataframe = load_dataframe(test_set_path)
 
-    # preprocess datasets
+    # preprocess and shuffle datasets
     train_set = Preprocess(train_dataframe, batch_name="train-set").preprocess_dataset()
+    np.random.shuffle(train_set)
+
     test_set = Preprocess(test_dataframe, batch_name="test-set").preprocess_dataset()
+    np.random.shuffle(test_set)
+
     val_set = Preprocess(validation_dataframe, batch_name="val-set").preprocess_dataset()
+    np.random.shuffle(val_set)
+
 
     # save datasets
     write_json(train_set, file=(save_to_folder + "/train_set_tweets.json"))

@@ -3,6 +3,7 @@ import pandas as pd
 import json
 import nltk
 from gensim.models import Word2Vec
+from termcolor import colored
 
 
 # load data frame
@@ -35,3 +36,12 @@ def unzip(zipped: list) -> list:
 def load_gensim_model(file: str=""):
     return Word2Vec.load(file)
 
+# print trainings progress
+def print_progress(epochs: int, epoch: int, loss: float, val_acc: float):
+    epochs = colored(epoch+1, "cyan", attrs=['bold']) + colored("/", "cyan", attrs=['bold']) + colored(epochs, "cyan", attrs=['bold'])
+    loss = colored(round(loss, 6), "cyan", attrs=['bold'])
+    val_acc = colored(round(val_acc, 4), "cyan", attrs=['bold']) + colored("%", "cyan", attrs=['bold'])
+
+    print(" ")
+    print("\nepoch {} - loss: {} - val_acc: {}".format(epochs, loss, val_acc))
+    print("\n..........................................................................................\n")
